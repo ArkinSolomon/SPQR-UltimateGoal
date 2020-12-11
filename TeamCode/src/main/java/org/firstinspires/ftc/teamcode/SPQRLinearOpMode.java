@@ -151,6 +151,7 @@ public abstract class SPQRLinearOpMode extends LinearOpMode {
     /**
      *  This method is an abstraction that returns true if at least one motor is running, false if
      *  no motors are running.
+     *
      * @return returns the boolean true if 1 or more drives are running, false otherwise.
      */
     public boolean drivesBusy() {

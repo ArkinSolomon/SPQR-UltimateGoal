@@ -44,7 +44,7 @@ public class HardwareSPQR {
     private static final String vuforiaKey = "ATssCgr/////AAABmen/Y0Ij5Eo4g95+2iw/E9AdGtmFswuKEHlcF66eyInTs5FCLLEzEzKNyJNpnAdDiOBeQhWH6ftGrQjp/7kYSae5lTqXdFte5FsSFV/MxOY5zvIYGwA/ahozNrG8SDGwn8m7puab/XGbFla4iA2xBZCbZOWAL1GlQONJdX09u8iYAEuxlpJZx2SLpIJtDSwHgR0RaGQGoAL+wbsnanXnAk+wPk9QxgXTOrRNFMbFNqsndWyRro5UeGfTpiRqBDA1na1024KNQd6vfOaDDj6vcX6NiUYYtu06Kd42V5tK4u17c5qFZ6qgki8L33oLi0m3f2RJGV8z/idK5lcD9+JwE4VEveakOLfNij/Yeooot+oO";
 
     //The name of the trained model
-    private static final String modelFileName = "Rings.tflite";
+    private static final String modelFileName = "UltimateGoal.tflite";
 
     //The names of the objects stored in the model
     private static final String object1 = "Four";
@@ -70,6 +70,9 @@ public class HardwareSPQR {
 
     //Whether or not to initialize ring detection
     private boolean initializeRingDetection = false;
+
+    //Whether or not to initialize vuforia trackables
+    private boolean initializeVuforia = false;
 
     //This stores the vuforia trackables object contaiining all of the vuforia trackables
     private VuforiaTrackables ultimateGoalTrackables;
@@ -198,76 +201,79 @@ public class HardwareSPQR {
         //Launch vuforia instance
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
-        //Load trackables
-        ultimateGoalTrackables = vuforia.loadTrackablesFromAsset("UltimateGoal");
-        allTrackables.addAll(ultimateGoalTrackables);
-        blueTowerGoal = ultimateGoalTrackables.get(0);
-        blueTowerGoal.setName("BlueTowerGoal");
-        redTowerGoal = ultimateGoalTrackables.get(1);
-        redTowerGoal.setName("RedTowerGoal");
-        redAlliance = ultimateGoalTrackables.get(2);
-        redAlliance.setName("RedAlliance");
-        blueAlliance = ultimateGoalTrackables.get(3);
-        blueAlliance.setName("BlueAlliance");
-        frontWall = ultimateGoalTrackables.get(4);
-        frontWall.setName("FrontWall");
+        if (initializeVuforia){
 
-        //Set target locations
-        OpenGLMatrix blueTowerGoalLocation = OpenGLMatrix
-                .translation(mmFTCFieldWidth / 2, mmFTCFieldWidth / 4, 5.75f * mmPerInch)
-                .multiplied(Orientation.getRotationMatrix(
-                        AxesReference.EXTRINSIC, AxesOrder.XYZ,
-                        AngleUnit.DEGREES, 90, 0, -90));
-        blueTowerGoal.setLocation(blueTowerGoalLocation);
-        RobotLog.ii("Vuforia Navigation", "Blue tower goal location=" + blueTowerGoalLocation.toString());
+            //Load trackables
+            ultimateGoalTrackables = vuforia.loadTrackablesFromAsset("UltimateGoal");
+            allTrackables.addAll(ultimateGoalTrackables);
+            blueTowerGoal = ultimateGoalTrackables.get(0);
+            blueTowerGoal.setName("BlueTowerGoal");
+            redTowerGoal = ultimateGoalTrackables.get(1);
+            redTowerGoal.setName("RedTowerGoal");
+            redAlliance = ultimateGoalTrackables.get(2);
+            redAlliance.setName("RedAlliance");
+            blueAlliance = ultimateGoalTrackables.get(3);
+            blueAlliance.setName("BlueAlliance");
+            frontWall = ultimateGoalTrackables.get(4);
+            frontWall.setName("FrontWall");
 
-        OpenGLMatrix redTowerGoalLocation = OpenGLMatrix
-                .translation(mmFTCFieldWidth / 2, -mmFTCFieldWidth / 4, 5.75f * mmPerInch)
-                .multiplied(Orientation.getRotationMatrix(
-                        AxesReference.EXTRINSIC, AxesOrder.XYZ,
-                        AngleUnit.DEGREES, 90, 0, -90));
-        redTowerGoal.setLocation(blueTowerGoalLocation);
-        RobotLog.ii("Vuforia Navigation", "Red tower goal location=" + redTowerGoalLocation.toString());
+            //Set target locations
+            OpenGLMatrix blueTowerGoalLocation = OpenGLMatrix
+                    .translation(mmFTCFieldWidth / 2, mmFTCFieldWidth / 4, 5.75f * mmPerInch)
+                    .multiplied(Orientation.getRotationMatrix(
+                            AxesReference.EXTRINSIC, AxesOrder.XYZ,
+                            AngleUnit.DEGREES, 90, 0, -90));
+            blueTowerGoal.setLocation(blueTowerGoalLocation);
+            RobotLog.ii("Vuforia Navigation", "Blue tower goal location=" + blueTowerGoalLocation.toString());
 
-        OpenGLMatrix redAllianceLocation = OpenGLMatrix
-                .translation(0, -mmFTCFieldWidth / 2, 5.75f * mmPerInch)
-                .multiplied(Orientation.getRotationMatrix(
-                        AxesReference.EXTRINSIC, AxesOrder.XYZ,
-                        AngleUnit.DEGREES, 90, 0, 180));
-        redAlliance.setLocation(redAllianceLocation);
-        RobotLog.ii("Vuforia Navigation", "Red alliance location=" + redAllianceLocation.toString());
+            OpenGLMatrix redTowerGoalLocation = OpenGLMatrix
+                    .translation(mmFTCFieldWidth / 2, -mmFTCFieldWidth / 4, 5.75f * mmPerInch)
+                    .multiplied(Orientation.getRotationMatrix(
+                            AxesReference.EXTRINSIC, AxesOrder.XYZ,
+                            AngleUnit.DEGREES, 90, 0, -90));
+            redTowerGoal.setLocation(blueTowerGoalLocation);
+            RobotLog.ii("Vuforia Navigation", "Red tower goal location=" + redTowerGoalLocation.toString());
 
-        OpenGLMatrix blueAllianceLocation = OpenGLMatrix
-                .translation(0, mmFTCFieldWidth / 2, 5.75f * mmPerInch)
-                .multiplied(Orientation.getRotationMatrix(
-                        AxesReference.EXTRINSIC, AxesOrder.XYZ,
-                        AngleUnit.DEGREES, 90, 0, 0));
-        blueAlliance.setLocation(blueAllianceLocation);
-        RobotLog.ii("Vuforia Navigation", "Blue alliance location=" + blueAllianceLocation.toString());
+            OpenGLMatrix redAllianceLocation = OpenGLMatrix
+                    .translation(0, -mmFTCFieldWidth / 2, 5.75f * mmPerInch)
+                    .multiplied(Orientation.getRotationMatrix(
+                            AxesReference.EXTRINSIC, AxesOrder.XYZ,
+                            AngleUnit.DEGREES, 90, 0, 180));
+            redAlliance.setLocation(redAllianceLocation);
+            RobotLog.ii("Vuforia Navigation", "Red alliance location=" + redAllianceLocation.toString());
 
-        OpenGLMatrix frontWallLocation = OpenGLMatrix
-                .translation(0, -mmFTCFieldWidth / 2, 5.75f * mmPerInch)
-                .multiplied(Orientation.getRotationMatrix(
-                        AxesReference.EXTRINSIC, AxesOrder.XYZ,
-                        AngleUnit.DEGREES, 90, 0, 90));
-        frontWall.setLocation(redAllianceLocation);
-        RobotLog.ii("Vuforia Navigation", "Front wall location=" + frontWallLocation.toString());
+            OpenGLMatrix blueAllianceLocation = OpenGLMatrix
+                    .translation(0, mmFTCFieldWidth / 2, 5.75f * mmPerInch)
+                    .multiplied(Orientation.getRotationMatrix(
+                            AxesReference.EXTRINSIC, AxesOrder.XYZ,
+                            AngleUnit.DEGREES, 90, 0, 0));
+            blueAlliance.setLocation(blueAllianceLocation);
+            RobotLog.ii("Vuforia Navigation", "Blue alliance location=" + blueAllianceLocation.toString());
 
-        //Set phone location
-        phoneLocationOnRobot = OpenGLMatrix
-                .translation(mmBotWidth/2,0,0)
-                .multiplied(Orientation.getRotationMatrix(
-                        AxesReference.EXTRINSIC, AxesOrder.XYZ,
-                        AngleUnit.DEGREES, 90, 90, 0));
-        RobotLog.ii("Vuforia Navigation", "Phone location=" + phoneLocationOnRobot.toString());
-        ((VuforiaTrackableDefaultListener) blueTowerGoal.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
-        ((VuforiaTrackableDefaultListener) redTowerGoal.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
-        ((VuforiaTrackableDefaultListener) redAlliance.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
-        ((VuforiaTrackableDefaultListener) blueAlliance.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
-        ((VuforiaTrackableDefaultListener) frontWall.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+            OpenGLMatrix frontWallLocation = OpenGLMatrix
+                    .translation(0, -mmFTCFieldWidth / 2, 5.75f * mmPerInch)
+                    .multiplied(Orientation.getRotationMatrix(
+                            AxesReference.EXTRINSIC, AxesOrder.XYZ,
+                            AngleUnit.DEGREES, 90, 0, 90));
+            frontWall.setLocation(redAllianceLocation);
+            RobotLog.ii("Vuforia Navigation", "Front wall location=" + frontWallLocation.toString());
 
-        //Activate all trackables
-        ultimateGoalTrackables.activate();
+            //Set phone location
+            phoneLocationOnRobot = OpenGLMatrix
+                    .translation(mmBotWidth/2,0,0)
+                    .multiplied(Orientation.getRotationMatrix(
+                            AxesReference.EXTRINSIC, AxesOrder.XYZ,
+                            AngleUnit.DEGREES, 90, 90, 0));
+            RobotLog.ii("Vuforia Navigation", "Phone location=" + phoneLocationOnRobot.toString());
+            ((VuforiaTrackableDefaultListener) blueTowerGoal.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+            ((VuforiaTrackableDefaultListener) redTowerGoal.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+            ((VuforiaTrackableDefaultListener) redAlliance.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+            ((VuforiaTrackableDefaultListener) blueAlliance.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+            ((VuforiaTrackableDefaultListener) frontWall.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+
+            //Activate all trackables
+            ultimateGoalTrackables.activate();
+        }
 
         /* Initialize object detection */
 
@@ -275,9 +281,11 @@ public class HardwareSPQR {
         if (initializeRingDetection) {
             TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(hwMap.appContext.getResources().getIdentifier(
                     "tfodMonitorViewId", "id", hwMap.appContext.getPackageName()));
-            tfodParameters.minResultConfidence = 0.8f;
+            tfodParameters.minResultConfidence = 0.3f;
+            tfodParameters.isModelQuantized = false;
             tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
             tfod.loadModelFromAsset(modelFileName, object1, object2);
+            tfod.activate();
         }
 
         this.robotIsInitialized = true;
@@ -425,7 +433,7 @@ public class HardwareSPQR {
      * This method updates the position of the robot according to the detected navigation targets
      */
     public void updateRobotPosition() {
-        if (!this.robotIsInitialized) return;
+        if (!this.robotIsInitialized || !this.initializeVuforia) return;
         for (VuforiaTrackable trackable : allTrackables) {
             telemetry.addData(trackable.getName(), ((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible() ? "Visible" : "Not Visible");
             OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
@@ -444,9 +452,9 @@ public class HardwareSPQR {
 
     public Rings updateObjectDetection() {
         if (initializeRingDetection){
+            telemetry.addData("obj detection", "obj detection active");
             List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
             if (updatedRecognitions != null){
-                int i = 0;
                 for (Recognition recognition : updatedRecognitions) {
                     String label = recognition.getLabel();
                     telemetry.addData("Object", label);
