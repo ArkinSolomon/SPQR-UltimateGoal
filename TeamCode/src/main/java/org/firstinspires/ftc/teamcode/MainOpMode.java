@@ -14,7 +14,11 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  *  - Right stick Y: Speed of the right drive motors of the robot.
  *  - Left stick Y: Speed of the left drive motors of the robot.
  *  - Button 'a': Reverse direction.
- *  - Button 'b': Toggle sniper mode
+ *  - Button 'b': Toggle sniper mode.
+ *
+ * Gunner controls:
+ *  - Left trigger: Start intake.
+ *  - Dpad left: Spit intake.
  *
  * @author Arkin Solomon
  */
@@ -34,26 +38,28 @@ public class MainOpMode extends OpMode {
     public void init() {
 
         //Initialize hardware
-        this.robot.init(hardwareMap);
+        robot.init(hardwareMap);
     }
 
     @Override
     public void loop() {
 
-        /* Left and right strafing movement */
+        /* Driver controls */
+
+        //Left and right strafing
         if (gamepad1.left_bumper){
             if (gamepad1.right_bumper) return;
-            this.robot.strafe(Dir.LEFT, this.speed);
+            robot.strafe(Dir.LEFT, speed);
         }
         if (gamepad1.right_bumper) {
             if (gamepad1.left_bumper) return;
-            this.robot.strafe(Dir.RIGHT, this.speed);
+            robot.strafe(Dir.RIGHT, speed);
         }
 
-        /* Tank movement */
-        double right = -gamepad1.right_stick_y * this.speed;
-        double left = -gamepad1.left_stick_y * this.speed;
-        if (this.speed < 0){
+        //Tank movement
+        double right = -gamepad1.right_stick_y * speed;
+        double left = -gamepad1.left_stick_y * speed;
+        if (speed < 0){
             double l = left;
             left = right;
             right = l;
@@ -61,40 +67,63 @@ public class MainOpMode extends OpMode {
 
         //Only tank move if not strafing
         if (!gamepad1.left_bumper && !gamepad1.right_bumper){
-            this.robot.tank(right, left);
+            robot.tank(right, left);
         }
 
-        /* Reverse direction */
+        //Reverse directions
         if (gamepad1.a) {
-            if (this.gamepad1_aPressed) return;
-            this.gamepad1_aPressed = true;
-            this.speed *= -1;
+            if (gamepad1_aPressed) return;
+            gamepad1_aPressed = true;
+            speed *= -1;
         }
         if (!gamepad1.a){
-            this.gamepad1_aPressed = false;
+            gamepad1_aPressed = false;
         }
 
-        /* Sniper mode */
+        //Sniper mode
         if (gamepad1.b) {
-            if (this.gamepad1_bPressed) return;
-            this.gamepad1_bPressed = true;
-            if (this.speed > 0){
-                if (this.speed > 0.5){
-                    this.speed = 0.5;
+            if (gamepad1_bPressed) return;
+            gamepad1_bPressed = true;
+            if (speed > 0){
+                if (speed > 0.5){
+                    speed = 0.5;
                 }else{
-                    this.speed = 1.0;
+                    speed = 1.0;
                 }
             }else{
-                if (this.speed < -0.5){
-                    this.speed = -0.5;
+                if (speed < -0.5){
+                    speed = -0.5;
                 }else{
-                    this.speed = -1.0;
+                    speed = -1.0;
                 }
             }
         }
         if (!gamepad1.b){
-            this.gamepad1_bPressed = false;
+            gamepad1_bPressed = false;
         }
+
+        /* Gunner controls */
+
+        //Drop lower intake
+        if (gamepad2.a){
+            robot.dropIntake();
+        }
+
+        //Raise lower intake
+        if (gamepad2.b){
+            robot.raiseIntake();
+        }
+
+        //Start intake
+        if (gamepad2.left_trigger > 0.25){
+            robot.lowIntakeMotor.setPower(1);
+        }else if (gamepad2.dpad_left){
+            robot.lowIntakeMotor.setPower(-1);
+        }else{
+            robot.lowIntakeMotor.setPower(0);
+        }
+
+        //Update telemetry
         telemetry.update();
     }
 }

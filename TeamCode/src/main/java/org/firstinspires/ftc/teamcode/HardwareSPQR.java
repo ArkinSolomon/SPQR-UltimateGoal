@@ -3,7 +3,9 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
@@ -26,10 +28,14 @@ import java.util.List;
 /**
  * Hardware configurations
  *
- * Motor channel H1-0 (NeveRest 40 Gearmotor):        Left front drive motor:   "left_front_drive"
- * Motor channel H1-1 (NeveRest 40 Gearmotor):        Right front drive motor:  "right_front_drive"
- * Motor channel H1-2 (NeveRest 40 Gearmotor):        Left back drive motor:    "left_back_drive"
- * Motor channel H1-3 (NeveRest 40 Gearmotor):        Right back drive motor:   "right_back_drive"
+ * Motor channel H1-0 (NeveRest 40 Gearmotor):        Right front drive motor:   "right_front_drive"
+ * Motor channel H1-1 (NeveRest 40 Gearmotor):        Left front drive motor:    "left_front_drive"
+ * Motor channel H1-2 (NeveRest 40 Gearmotor):        Right back drive motor:    "right_back_drive"
+ * Motor channel H1-3 (NeveRest 40 Gearmotor):        Left back drive motor:     "left_back_drive"
+ * Motor channel H2-0 (REV Core Hex Motor):           Lower Intake motor:        "low_intake_motor"
+ * Servo channel H1-0 (Servo):                        Left intake drop servo:    "l_intake_drop"
+ * I2C H1-0-0 (REV Expansion Hub IMU):                Hub connector:            "imu"
+ * I2C H2-0-0 (REV Expansion Hub IMU):                Hub connector:            "imu 1"
  */
 
 /**
@@ -47,8 +53,8 @@ public class HardwareSPQR {
     private static final String modelFileName = "UltimateGoal.tflite";
 
     //The names of the objects stored in the model
-    private static final String object1 = "Four";
-    private static final String object2 = "One";
+    private static final String object1 = "f";
+    private static final String object2 = "o";
 
     //How many millimeters in an inch
     public float mmPerInch = 25.4f;
@@ -63,13 +69,18 @@ public class HardwareSPQR {
     private HardwareMap hwMap = null;
 
     //Declare hardware
-    public DcMotor leftFrontDrive = null;
-    public DcMotor leftBackDrive = null;
     public DcMotor rightFrontDrive = null;
+    public DcMotor leftFrontDrive = null;
     public DcMotor rightBackDrive = null;
+    public DcMotor leftBackDrive = null;
+    public DcMotor lowIntakeMotor = null;
+    public Servo lIntakeDrop = null;
 
     //Whether or not to initialize ring detection
     private boolean initializeRingDetection = false;
+
+    //Whether or not TFOD has been activated
+    private boolean isTfodActive = false;
 
     //Whether or not to initialize vuforia trackables
     private boolean initializeVuforia = false;
@@ -87,7 +98,7 @@ public class HardwareSPQR {
     public VuforiaLocalizer vuforia = null;
 
     //The instance of the tensorflow object detector we're using for ring detection
-    private TFObjectDetector tfod;
+    public TFObjectDetector tfod = null;
 
     //List of all navigation targets (for convinience)
     List<VuforiaTrackable> allTrackables = new ArrayList<VuforiaTrackable>();
@@ -129,11 +140,16 @@ public class HardwareSPQR {
      *
      * @param telemetry The telemetry (output) instance of the robot, provided by the OpMode's
      *                  superclass.
-     * @param initializeRingDetection Whether or not to initialize ring detection.
+     * @param iV Whether or not to initialize vuforia.
+     * @param iRD Whether or not to initialize ring detection.
      */
-    public HardwareSPQR(Telemetry telemetry, boolean initializeRingDetection) {
+    public HardwareSPQR(Telemetry telemetry, boolean iV, boolean iRD) {
         this.telemetry = telemetry;
-        this.initializeRingDetection = initializeRingDetection;
+        this.initializeVuforia = iV;
+        this.initializeRingDetection = iRD;
+        if (iRD && !iV){
+            this.initializeVuforia = true;
+        }
     }
 
     /**
@@ -141,46 +157,57 @@ public class HardwareSPQR {
      * This method should be updated whenever a hardware device is added or removed, or when a
      * device's settings need to be modified. This method should be called once.
      *
-     * @param ahwMap The hardware map of the class instance of the callee to be assigned to the
+     * @param m The hardware map of the class instance of the callee to be assigned to the
      *               instance of hardware.
      */
-    public void init(HardwareMap ahwMap) {
+    public void init(HardwareMap m) {
 
         //Initialize hardware map
-        hwMap = ahwMap;
+        hwMap = m;
 
         /* Initialize motors*/
 
-//        //Define motors
-//        this.leftFrontDrive = hwMap.get(DcMotor.class, "left_front_drive");
-//        this.leftBackDrive = hwMap.get(DcMotor.class, "left_back_drive");
-//        this.rightFrontDrive = hwMap.get(DcMotor.class, "right_front_drive");
-//        this.rightBackDrive = hwMap.get(DcMotor.class, "right_back_drive");
-//
-//        //Reset encoders and set initial positions
-//        this.setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        this.setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//
-//        //Set motors to brake
-//        this.setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-//
-//        //Set encoder tolerance of all of the motors on the robot
-//        ((DcMotorEx) this.leftFrontDrive).setTargetPositionTolerance(10);
-//        ((DcMotorEx) this.leftBackDrive).setTargetPositionTolerance(10);
-//        ((DcMotorEx) this.rightFrontDrive).setTargetPositionTolerance(10);
-//        ((DcMotorEx) this.rightBackDrive).setTargetPositionTolerance(10);
-//
-//        //Sets motor direction
-//        this.leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-//        this.leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-//        this.rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-//        this.rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-//
-//        //Set all motor power to zero
-//        this.leftFrontDrive.setPower(0);
-//        this.leftBackDrive.setPower(0);
-//        this.rightFrontDrive.setPower(0);
-//        this.rightBackDrive.setPower(0);
+        //Define motors
+        rightFrontDrive = hwMap.get(DcMotor.class, "right_front_drive");
+        leftFrontDrive = hwMap.get(DcMotor.class, "left_front_drive");
+        rightBackDrive = hwMap.get(DcMotor.class, "right_back_drive");
+        leftBackDrive = hwMap.get(DcMotor.class, "left_back_drive");
+        lowIntakeMotor = hwMap.get(DcMotor.class, "low_intake_motor");
+
+        //Reset encoders and set initial positions
+        setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        //Set drive motors to brake
+        setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        //Set encoder tolerance of the motors on the robot
+        ((DcMotorEx) rightFrontDrive).setTargetPositionTolerance(10);
+        ((DcMotorEx) leftFrontDrive).setTargetPositionTolerance(10);
+        ((DcMotorEx) rightBackDrive).setTargetPositionTolerance(10);
+        ((DcMotorEx) leftBackDrive).setTargetPositionTolerance(10);
+
+        //Set motor direction
+        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        lowIntakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        //Set all motor power to zero
+        leftFrontDrive.setPower(0);
+        leftBackDrive.setPower(0);
+        rightFrontDrive.setPower(0);
+        rightBackDrive.setPower(0);
+        lowIntakeMotor.setPower(0);
+
+        /* Servo setup */
+
+        //Define servos
+        lIntakeDrop = hwMap.get(Servo.class, "l_intake_drop");
+
+        //Set initial servo position
+        lIntakeDrop.setPosition(0);
 
         /* Sound setup */
 
@@ -190,20 +217,20 @@ public class HardwareSPQR {
 
         /* Vuforia setup */
 
-        //Get camera
-        cameraMonitorViewId = hwMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hwMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-
-        //Setup parameters
-        parameters.vuforiaLicenseKey = vuforiaKey;
-        parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
-
-        //Launch vuforia instance
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
         if (initializeVuforia){
 
-            //Load trackables
+            //Create parameters
+            cameraMonitorViewId = hwMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hwMap.appContext.getPackageName());
+            VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+
+            //Setup parameters
+            parameters.vuforiaLicenseKey = vuforiaKey;
+            parameters.cameraDirection = VuforiaLocalizer.CameraDirection.BACK;
+
+            //Launch vuforia instance
+            vuforia = ClassFactory.getInstance().createVuforia(parameters);
+
+            //Load vuforia trackables
             ultimateGoalTrackables = vuforia.loadTrackablesFromAsset("UltimateGoal");
             allTrackables.addAll(ultimateGoalTrackables);
             blueTowerGoal = ultimateGoalTrackables.get(0);
@@ -275,17 +302,15 @@ public class HardwareSPQR {
             ultimateGoalTrackables.activate();
         }
 
-        /* Initialize object detection */
+        /* Initialize tensor flow object detection */
 
         //Initialize instance
         if (initializeRingDetection) {
             TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(hwMap.appContext.getResources().getIdentifier(
                     "tfodMonitorViewId", "id", hwMap.appContext.getPackageName()));
             tfodParameters.minResultConfidence = 0.3f;
-            tfodParameters.isModelQuantized = false;
             tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
             tfod.loadModelFromAsset(modelFileName, object1, object2);
-            tfod.activate();
         }
 
         this.robotIsInitialized = true;
@@ -294,7 +319,48 @@ public class HardwareSPQR {
         soundPlayer.startPlaying(hwMap.appContext, pacmanStart);
     }
 
-    /* Movement abstractions */
+    /**
+     * This method sets the drive behavior of what one of the drive motors of the robot are to do
+     * when its power is set to 0.
+     *
+     * @param behavior A ZeroPowerBehavior enumeration (Under DcMotor) which will be applied to all
+     *                 of the drive motors of the robot.
+     */
+    public void setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior behavior) {
+        leftFrontDrive.setZeroPowerBehavior(behavior);
+        rightFrontDrive.setZeroPowerBehavior(behavior);
+        leftBackDrive.setZeroPowerBehavior(behavior);
+        rightBackDrive.setZeroPowerBehavior(behavior);
+    }
+
+    /**
+     * This method sets the drive mode of all of the drive motors.
+     *
+     * @param mode a RunMode enumeration (Under DcMotor) which will be applied to all
+     *             of the drive motors of the robot.
+     */
+    public void setDriveMode(DcMotor.RunMode mode) {
+        leftFrontDrive.setMode(mode);
+        rightFrontDrive.setMode(mode);
+        leftBackDrive.setMode(mode);
+        rightBackDrive.setMode(mode);
+    }
+
+    /**
+     * Raise the lower intake.
+     */
+    public void raiseIntake() {
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
+        lIntakeDrop.setPosition(0);
+    }
+
+    /**
+     * Drop the lower intake.
+     */
+    public void dropIntake() {
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
+        lIntakeDrop.setPosition(-1);
+    }
 
     /**
      * This method sets the powers of the motors in a way that will strafe the robot in a given
@@ -305,15 +371,14 @@ public class HardwareSPQR {
      *                  is to strafe.
      */
     public void strafe(Dir direction, double power) {
-        if (!robotIsInitialized) return;
-        power *= .5;
-        this.leftFrontDrive.setPower((direction == Dir.LEFT) ? -power : power);
-        this.leftBackDrive.setPower((direction == Dir.LEFT) ? power : -power);
-        this.rightFrontDrive.setPower((direction == Dir.LEFT) ? power : -power);
-        this.rightBackDrive.setPower((direction == Dir.LEFT) ? -power : power);
-        if (power != 0) {
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
+        leftFrontDrive.setPower((direction == Dir.LEFT) ? -power : power);
+        leftBackDrive.setPower((direction == Dir.LEFT) ? power : -power);
+        rightFrontDrive.setPower((direction == Dir.LEFT) ? power : -power);
+        rightBackDrive.setPower((direction == Dir.LEFT) ? -power : power);
+        if (power != 0){
 //            soundPlayer.startPlaying(hwMap.appContext, pacmanChomp);
-        } else {
+        }else{
             soundPlayer.stopPlayingAll();
         }
     }
@@ -325,14 +390,14 @@ public class HardwareSPQR {
      *              be set to.
      */
     public void setPowers(double power) {
-        if (!robotIsInitialized) return;
-        this.leftFrontDrive.setPower(power);
-        this.leftBackDrive.setPower(power);
-        this.rightFrontDrive.setPower(power);
-        this.rightBackDrive.setPower(power);
-        if (power != 0) {
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
+        leftFrontDrive.setPower(power);
+        leftBackDrive.setPower(power);
+        rightFrontDrive.setPower(power);
+        rightBackDrive.setPower(power);
+        if (power != 0){
 //            soundPlayer.startPlaying(hwMap.appContext, pacmanChomp);
-        } else {
+        }else{
             soundPlayer.stopPlayingAll();
         }
     }
@@ -342,7 +407,7 @@ public class HardwareSPQR {
      * -1.0.
      */
     public void backward() {
-        if (!robotIsInitialized) return;
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
         this.setPowers(-1.0);
 //        soundPlayer.startPlaying(hwMap.appContext, pacmanChomp);
     }
@@ -352,7 +417,7 @@ public class HardwareSPQR {
      * 1.0.
      */
     public void forward() {
-        if (!robotIsInitialized) return;
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
         this.setPowers(1.0);
 //        soundPlayer.startPlaying(hwMap.appContext, pacmanChomp);
     }
@@ -367,14 +432,14 @@ public class HardwareSPQR {
      *              will be set to.
      */
     public void tank(double left, double right) {
-        if (!robotIsInitialized) return;
-        this.leftFrontDrive.setPower(left);
-        this.leftBackDrive.setPower(left);
-        this.rightFrontDrive.setPower(right);
-        this.rightBackDrive.setPower(right);
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
+        leftFrontDrive.setPower(left);
+        leftBackDrive.setPower(left);
+        rightFrontDrive.setPower(right);
+        rightBackDrive.setPower(right);
         if (left != 0 || right != 0){
 //            soundPlayer.startPlaying(hwMap.appContext, pacmanChomp);
-        } else if (left == 0 && right == 0) {
+        }else if (left == 0 && right == 0){
             soundPlayer.stopPlayingAll();
         }
     }
@@ -384,36 +449,9 @@ public class HardwareSPQR {
      * power the robot will stop in place.
      */
     public void stopMoving() {
-        if (!this.robotIsInitialized) return;
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
         this.setPowers(0);
         soundPlayer.stopPlayingAll();
-    }
-
-    /**
-     * This method sets the drive behavior of what one of the drive motors of the robot are to do
-     * when its power is set to 0.
-     *
-     * @param behavior A ZeroPowerBehavior enumeration (Under DcMotor) which will be applied to all
-     *                 of the drive motors of the robot.
-     */
-    public void setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior behavior) {
-        this.leftFrontDrive.setZeroPowerBehavior(behavior);
-        this.rightFrontDrive.setZeroPowerBehavior(behavior);
-        this.leftBackDrive.setZeroPowerBehavior(behavior);
-        this.rightBackDrive.setZeroPowerBehavior(behavior);
-    }
-
-    /**
-     * This method sets the drive mode of all of the drive motors.
-     *
-     * @param mode a RunMode enumeration (Under DcMotor) which will be applied to all
-     *             of the drive motors of the robot.
-     */
-    public void setDriveMode(DcMotor.RunMode mode) {
-        this.leftFrontDrive.setMode(mode);
-        this.rightFrontDrive.setMode(mode);
-        this.leftBackDrive.setMode(mode);
-        this.rightBackDrive.setMode(mode);
     }
 
     /**
@@ -423,6 +461,7 @@ public class HardwareSPQR {
      * @param target An integer which is the target, in encoder units, for the robot to go to.
      */
     public void setDriveTargetPosition(int target) {
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
         this.leftFrontDrive.setTargetPosition(target);
         this.rightFrontDrive.setTargetPosition(target);
         this.leftBackDrive.setTargetPosition(target);
@@ -430,10 +469,11 @@ public class HardwareSPQR {
     }
 
     /**
-     * This method updates the position of the robot according to the detected navigation targets
+     * This method updates the position of the robot according to the detected navigation targets.
+     * The updated location can be accessed through the location variable.
      */
     public void updateRobotPosition() {
-        if (!this.robotIsInitialized || !this.initializeVuforia) return;
+        if (!this.robotIsInitialized || !this.initializeVuforia)throw new Error("Robot not initialized");;
         for (VuforiaTrackable trackable : allTrackables) {
             telemetry.addData(trackable.getName(), ((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible() ? "Visible" : "Not Visible");
             OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
@@ -450,17 +490,23 @@ public class HardwareSPQR {
         }
     }
 
+    /**
+     * Get how many rings the robot detects in the starter stack.
+     *
+     * @return The number of rings in the starter stack from an enumeration.
+     */
     public Rings updateObjectDetection() {
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
         if (initializeRingDetection){
-            telemetry.addData("obj detection", "obj detection active");
-            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-            if (updatedRecognitions != null){
-                for (Recognition recognition : updatedRecognitions) {
-                    String label = recognition.getLabel();
-                    telemetry.addData("Object", label);
-                }
+            if (!isTfodActive){
+                tfod.activate();
+                isTfodActive = true;
             }
-            telemetry.addData("Object", "NOT FOUND");
+            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+            if (updatedRecognitions != null && updatedRecognitions.size() > 0) {
+                String firstRecognition = updatedRecognitions.get(0).getLabel();
+                return firstRecognition == "f" ? Rings.FOUR : Rings.ONE;
+            }
         }
         return Rings.NONE;
     }

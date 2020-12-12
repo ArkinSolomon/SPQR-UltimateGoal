@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -10,20 +11,16 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  *
  * @author Arkin Solomon
  */
-@TeleOp(name="VuforiaTestOpMode", group="Developmet")
-public class VuforiaTestOpMode extends OpMode {
-
-    private HardwareSPQR robot = new HardwareSPQR(telemetry, true);
+@Autonomous(name="VuforiaTestOpMode", group="Developmet")
+public class VuforiaTestOpMode extends SPQRLinearOpMode {
 
     @Override
-    public void init() {
+    public void runOpMode() {
         robot.init(hardwareMap);
-    }
-
-    @Override
-    public void loop() {
-        robot.updateRobotPosition();
-        robot.updateObjectDetection();
+        waitForStart();
+        Rings rings = waitForRings(5000);
+        telemetry.addData("Rings", rings.toString());
         telemetry.update();
+        while (opModeIsActive()){}
     }
 }

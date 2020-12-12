@@ -7,6 +7,8 @@ import com.vuforia.Vuforia;
 
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
+import java.util.Date;
+
 /**
  * Custom Linear OpMode class with extra functions. Used mainly for autonomous.
  *
@@ -27,7 +29,8 @@ public abstract class SPQRLinearOpMode extends LinearOpMode {
     private int leftBackEncoder;
     private int rightBackEncoder;
 
-    public HardwareSPQR robot = new HardwareSPQR(telemetry, true);
+    //Instance of robot hardware class
+    public HardwareSPQR robot = new HardwareSPQR(telemetry, true, true);
 
     /**
      * This method calculates the approximate distance that the robot has traveled with the average
@@ -152,9 +155,29 @@ public abstract class SPQRLinearOpMode extends LinearOpMode {
      *  This method is an abstraction that returns true if at least one motor is running, false if
      *  no motors are running.
      *
-     * @return returns the boolean true if 1 or more drives are running, false otherwise.
+     * @return returns the boolean true if one or more drives are running, false otherwise.
      */
     public boolean drivesBusy() {
         return (this.robot.leftFrontDrive.isBusy() || this.robot.rightFrontDrive.isBusy() || this.robot.leftBackDrive.isBusy() || this.robot.rightBackDrive.isBusy());
+    }
+
+    /**
+     * This method attempts to detect the amount of rings in a stack. If it can not find rings in
+     * the specified amount of time, it assumes there are no rings.
+     *
+     * @param waitFor How long to wait for in milliseconds.
+     * @return The detected amount of rings.
+     */
+    public Rings waitForRings(int waitFor) {
+        long startTime = new Date().getTime();
+        while (((int) (new Date().getTime() - startTime)) < waitFor){
+            Rings update = robot.updateObjectDetection();
+            if (update != Rings.NONE){
+                return update;
+            }
+        }
+        robot.tfod.deactivate();
+        robot.tfod.shutdown();
+        return Rings.NONE;
     }
 }
