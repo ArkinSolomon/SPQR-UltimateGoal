@@ -19,8 +19,13 @@ public class VuforiaTestOpMode extends SPQRLinearOpMode {
         robot.init(hardwareMap);
         waitForStart();
         Rings rings = waitForRings(5000);
+        drive(1905, 1);
+        turn2(90, 1);
         telemetry.addData("Rings", rings.toString());
         telemetry.update();
-        while (opModeIsActive()){}
+        robot.dropIntake();
+        while (opModeIsActive()){
+            updateTelemetry();
+        }
     }
 }

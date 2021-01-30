@@ -17,8 +17,12 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  *  - Button 'b': Toggle sniper mode.
  *
  * Gunner controls:
+ *  - Dpad down: Lower intake.
+ *  - Dpad up: Raise intake.
  *  - Left trigger: Start intake.
  *  - Dpad left: Spit intake.
+ *  - Dpad right: Suck cannon.
+ *  - Right trigger: Shoot cannon.
  *
  * @author Arkin Solomon
  */
@@ -30,35 +34,41 @@ public class MainOpMode extends OpMode {
     //Speed of the robot
     private double speed = 1.0;
 
-    //Prevent detecting multiple clicks
-    private boolean gamepad1_aPressed = false;
-    private boolean gamepad1_bPressed = false;
-
     @Override
-    public void init() {
+    public void init(){
 
         //Initialize hardware
         robot.init(hardwareMap);
+        robot.dropIntake();
+
+        //Rewrite gamepads
+        gamepad1 = new Input(gamepad1);
+        gamepad2 = new Input(gamepad2);
     }
 
     @Override
-    public void loop() {
+    public void loop(){
 
         /* Driver controls */
 
         //Left and right strafing
-        if (gamepad1.left_bumper){
-            if (gamepad1.right_bumper) return;
+        if (((Input) gamepad1).left_bumper.isDown){
+            if (((Input) gamepad1).right_bumper.isDown) return;
             robot.strafe(Dir.LEFT, speed);
         }
-        if (gamepad1.right_bumper) {
-            if (gamepad1.left_bumper) return;
+        if (((Input) gamepad1).right_bumper.isDown) {
+            if (((Input) gamepad1).left_bumper.isDown) return;
             robot.strafe(Dir.RIGHT, speed);
         }
 
+        //Reverse directions
+        if (((Input) gamepad1).a.down){
+            speed *= -1;
+        }
+
         //Tank movement
-        double right = -gamepad1.right_stick_y * speed;
-        double left = -gamepad1.left_stick_y * speed;
+        double right = -((Input) gamepad1).right_stick_y.value * speed;
+        double left = -((Input) gamepad1).left_stick_y.value * speed;
         if (speed < 0){
             double l = left;
             left = right;
@@ -66,24 +76,12 @@ public class MainOpMode extends OpMode {
         }
 
         //Only tank move if not strafing
-        if (!gamepad1.left_bumper && !gamepad1.right_bumper){
+        if (!((Input) gamepad1).left_bumper.isDown && !((Input) gamepad1).right_bumper.isDown){
             robot.tank(right, left);
         }
 
-        //Reverse directions
-        if (gamepad1.a) {
-            if (gamepad1_aPressed) return;
-            gamepad1_aPressed = true;
-            speed *= -1;
-        }
-        if (!gamepad1.a){
-            gamepad1_aPressed = false;
-        }
-
         //Sniper mode
-        if (gamepad1.b) {
-            if (gamepad1_bPressed) return;
-            gamepad1_bPressed = true;
+        if (((Input) gamepad1).b.down) {
             if (speed > 0){
                 if (speed > 0.5){
                     speed = 0.5;
@@ -98,32 +96,39 @@ public class MainOpMode extends OpMode {
                 }
             }
         }
-        if (!gamepad1.b){
-            gamepad1_bPressed = false;
-        }
 
         /* Gunner controls */
 
         //Drop lower intake
-        if (gamepad2.a){
+        if (((Input) gamepad2).dpad_down.down){
             robot.dropIntake();
         }
 
         //Raise lower intake
-        if (gamepad2.b){
+        if (((Input) gamepad2).dpad_up.down){
             robot.raiseIntake();
         }
 
-        //Start intake
-        if (gamepad2.left_trigger > 0.25){
-            robot.lowIntakeMotor.setPower(1);
-        }else if (gamepad2.dpad_left){
-            robot.lowIntakeMotor.setPower(-1);
+        //Control intake
+        if (((Input) gamepad2).left_trigger.isDown){
+            robot.startIntake();
+        }else if (((Input) gamepad2).dpad_right.down){
+            robot.spitIntake();
         }else{
-            robot.lowIntakeMotor.setPower(0);
+            robot.stopIntake();
+        }
+
+        //Control cannon
+        if (((Input) gamepad2).dpad_left.down){
+            robot.setCannonSpeed(1);
+        }else if (gamepad2.dpad_right){
+            robot.setCannonSpeed(-.1);
+        }else{
+            robot.setCannonSpeed(0);
         }
 
         //Update telemetry
         telemetry.update();
+
     }
 }

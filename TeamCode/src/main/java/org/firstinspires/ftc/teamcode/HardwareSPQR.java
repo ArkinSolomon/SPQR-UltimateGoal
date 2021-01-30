@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.ftccommon.SoundPlayer;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -25,17 +26,23 @@ import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
+/*
  * Hardware configurations
  *
  * Motor channel H1-0 (NeveRest 40 Gearmotor):        Right front drive motor:   "right_front_drive"
  * Motor channel H1-1 (NeveRest 40 Gearmotor):        Left front drive motor:    "left_front_drive"
  * Motor channel H1-2 (NeveRest 40 Gearmotor):        Right back drive motor:    "right_back_drive"
  * Motor channel H1-3 (NeveRest 40 Gearmotor):        Left back drive motor:     "left_back_drive"
- * Motor channel H2-0 (REV Core Hex Motor):           Lower Intake motor:        "low_intake_motor"
+ * Motor channel H2-0 (REV Core Hex Motor):           Lower intake motor:        "low_intake_motor"
+ * Motor channel H2-1 (HD Hex Motor):                 Right cannon motor:        "r_cannon_motor"
+ * Motor channel H2-2 (HD Hex Motor):                 Left cannon motor:         "l_cannon_motor"
+ * Motor channel H2-3 (HD Hex Motor):                 Arm motor:                 "arm_motor"
  * Servo channel H1-0 (Servo):                        Left intake drop servo:    "l_intake_drop"
- * I2C H1-0-0 (REV Expansion Hub IMU):                Hub connector:            "imu"
- * I2C H2-0-0 (REV Expansion Hub IMU):                Hub connector:            "imu 1"
+ * Servo channel H1-1 (CRServo):                      Left pulley servo:         "l_pulley_servo"
+ * Servo channel H1-2 (Servo):                        Arm wrist servo:           "wrist_servo"
+ * Servo channel H1-3 (Servo):                        Arm hand servo:            "hand_servo"
+ * I2C H1-0-0 (REV Expansion Hub IMU):                Hub connector:             "imu"
+ * I2C H2-0-0 (REV Expansion Hub IMU):                Hub connector:             "imu 1"
  */
 
 /**
@@ -68,13 +75,22 @@ public class HardwareSPQR {
     //Hardware map
     private HardwareMap hwMap = null;
 
+    //Temporary cannon speed adjustment
+    public final double cannonSpeed = .32;
+
     //Declare hardware
     public DcMotor rightFrontDrive = null;
     public DcMotor leftFrontDrive = null;
     public DcMotor rightBackDrive = null;
     public DcMotor leftBackDrive = null;
     public DcMotor lowIntakeMotor = null;
+    public DcMotor rCannonMotor = null;
+    public DcMotor lCannonMotor = null;
+    public DcMotor armMotor = null;
     public Servo lIntakeDrop = null;
+    public CRServo lPulleyServo = null;
+    public Servo wristServo = null;
+    public Servo handServo = null;
 
     //Whether or not to initialize ring detection
     private boolean initializeRingDetection = false;
@@ -131,7 +147,7 @@ public class HardwareSPQR {
      * @param telemetry The telemetry (output) instance of the robot, provided by the OpMode's
      *                  superclass.
      */
-    public HardwareSPQR(Telemetry telemetry) {
+    public HardwareSPQR(Telemetry telemetry){
         this.telemetry = telemetry;
     }
 
@@ -143,7 +159,7 @@ public class HardwareSPQR {
      * @param iV Whether or not to initialize vuforia.
      * @param iRD Whether or not to initialize ring detection.
      */
-    public HardwareSPQR(Telemetry telemetry, boolean iV, boolean iRD) {
+    public HardwareSPQR(Telemetry telemetry, boolean iV, boolean iRD){
         this.telemetry = telemetry;
         this.initializeVuforia = iV;
         this.initializeRingDetection = iRD;
@@ -160,7 +176,7 @@ public class HardwareSPQR {
      * @param m The hardware map of the class instance of the callee to be assigned to the
      *               instance of hardware.
      */
-    public void init(HardwareMap m) {
+    public void init(HardwareMap m){
 
         //Initialize hardware map
         hwMap = m;
@@ -168,11 +184,16 @@ public class HardwareSPQR {
         /* Initialize motors*/
 
         //Define motors
-        rightFrontDrive = hwMap.get(DcMotor.class, "right_front_drive");
-        leftFrontDrive = hwMap.get(DcMotor.class, "left_front_drive");
-        rightBackDrive = hwMap.get(DcMotor.class, "right_back_drive");
-        leftBackDrive = hwMap.get(DcMotor.class, "left_back_drive");
+        if (DevVars.enableDriveMotors){
+            rightFrontDrive = hwMap.get(DcMotor.class, "right_front_drive");
+            leftFrontDrive = hwMap.get(DcMotor.class, "left_front_drive");
+            rightBackDrive = hwMap.get(DcMotor.class, "right_back_drive");
+            leftBackDrive = hwMap.get(DcMotor.class, "left_back_drive");
+        }
         lowIntakeMotor = hwMap.get(DcMotor.class, "low_intake_motor");
+        rCannonMotor = hwMap.get(DcMotor.class, "r_cannon_motor");
+        lCannonMotor = hwMap.get(DcMotor.class, "l_cannon_motor");
+        armMotor = hwMap.get(DcMotor.class, "arm_motor");
 
         //Reset encoders and set initial positions
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -192,7 +213,9 @@ public class HardwareSPQR {
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        lowIntakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        lowIntakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        rCannonMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        lCannonMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         //Set all motor power to zero
         leftFrontDrive.setPower(0);
@@ -200,14 +223,20 @@ public class HardwareSPQR {
         rightFrontDrive.setPower(0);
         rightBackDrive.setPower(0);
         lowIntakeMotor.setPower(0);
+        rCannonMotor.setPower(0);
+        lCannonMotor.setPower(0);
 
         /* Servo setup */
 
         //Define servos
         lIntakeDrop = hwMap.get(Servo.class, "l_intake_drop");
+        lPulleyServo = hwMap.get(CRServo.class, "l_pulley_servo");
+        wristServo = hwMap.get(Servo.class, "wrist_servo");
+        handServo = hwMap.get(Servo.class, "hand_servo");
 
-        //Set initial servo position
-        lIntakeDrop.setPosition(0);
+        //Set initial servo position/power
+        lIntakeDrop.setPosition(1);
+        lPulleyServo.setPower(0);
 
         /* Sound setup */
 
@@ -218,10 +247,15 @@ public class HardwareSPQR {
         /* Vuforia setup */
 
         if (initializeVuforia){
+            VuforiaLocalizer.Parameters parameters = null;
 
             //Create parameters
-            cameraMonitorViewId = hwMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hwMap.appContext.getPackageName());
-            VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+            if (DevVars.showVuforiaMonitor) {
+                cameraMonitorViewId = hwMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hwMap.appContext.getPackageName());
+                parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+            }else{
+                parameters = new VuforiaLocalizer.Parameters();
+            }
 
             //Setup parameters
             parameters.vuforiaLicenseKey = vuforiaKey;
@@ -305,7 +339,7 @@ public class HardwareSPQR {
         /* Initialize tensor flow object detection */
 
         //Initialize instance
-        if (initializeRingDetection) {
+        if (initializeRingDetection){
             TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(hwMap.appContext.getResources().getIdentifier(
                     "tfodMonitorViewId", "id", hwMap.appContext.getPackageName()));
             tfodParameters.minResultConfidence = 0.3f;
@@ -326,7 +360,7 @@ public class HardwareSPQR {
      * @param behavior A ZeroPowerBehavior enumeration (Under DcMotor) which will be applied to all
      *                 of the drive motors of the robot.
      */
-    public void setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior behavior) {
+    public void setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior behavior){
         leftFrontDrive.setZeroPowerBehavior(behavior);
         rightFrontDrive.setZeroPowerBehavior(behavior);
         leftBackDrive.setZeroPowerBehavior(behavior);
@@ -339,7 +373,7 @@ public class HardwareSPQR {
      * @param mode a RunMode enumeration (Under DcMotor) which will be applied to all
      *             of the drive motors of the robot.
      */
-    public void setDriveMode(DcMotor.RunMode mode) {
+    public void setDriveMode(DcMotor.RunMode mode){
         leftFrontDrive.setMode(mode);
         rightFrontDrive.setMode(mode);
         leftBackDrive.setMode(mode);
@@ -349,17 +383,17 @@ public class HardwareSPQR {
     /**
      * Raise the lower intake.
      */
-    public void raiseIntake() {
+    public void raiseIntake(){
         if (!robotIsInitialized) throw new Error("Robot not initialized");
-        lIntakeDrop.setPosition(0);
+        lIntakeDrop.setPosition(1);
     }
 
     /**
      * Drop the lower intake.
      */
-    public void dropIntake() {
+    public void dropIntake(){
         if (!robotIsInitialized) throw new Error("Robot not initialized");
-        lIntakeDrop.setPosition(-1);
+        lIntakeDrop.setPosition(0);
     }
 
     /**
@@ -370,7 +404,7 @@ public class HardwareSPQR {
      * @param power     A double between -1.0 and 1.0 which represents the speed at which the robot
      *                  is to strafe.
      */
-    public void strafe(Dir direction, double power) {
+    public void strafe(Dir direction, double power){
         if (!robotIsInitialized) throw new Error("Robot not initialized");
         leftFrontDrive.setPower((direction == Dir.LEFT) ? -power : power);
         leftBackDrive.setPower((direction == Dir.LEFT) ? power : -power);
@@ -389,7 +423,7 @@ public class HardwareSPQR {
      * @param power A double between -1.0 and 1.0 which represents the speed that the motors will
      *              be set to.
      */
-    public void setPowers(double power) {
+    public void setPowers(double power){
         if (!robotIsInitialized) throw new Error("Robot not initialized");
         leftFrontDrive.setPower(power);
         leftBackDrive.setPower(power);
@@ -406,7 +440,7 @@ public class HardwareSPQR {
      * This method makes the robot go at full speed backward by setting all of the motor powers to
      * -1.0.
      */
-    public void backward() {
+    public void backward(){
         if (!robotIsInitialized) throw new Error("Robot not initialized");
         this.setPowers(-1.0);
 //        soundPlayer.startPlaying(hwMap.appContext, pacmanChomp);
@@ -422,16 +456,47 @@ public class HardwareSPQR {
 //        soundPlayer.startPlaying(hwMap.appContext, pacmanChomp);
     }
 
+    public void startIntake(){
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
+        this.lowIntakeMotor.setPower(1);
+        this.lPulleyServo.setPower(1);
+    }
+
+    public void stopIntake(){
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
+        this.lowIntakeMotor.setPower(0);
+        this.lPulleyServo.setPower(0);
+    }
+
+    public void spitIntake(){
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
+        this.lowIntakeMotor.setPower(-1);
+        this.lPulleyServo.setPower(-1);
+    }
+
+    /**
+     * This method sets the speed of both motors on the cannon.
+     *
+     * @param speed A double between -1.0 and 1.0 which determines the speed that the cannon motors
+     *              will be set to.
+     */
+    public void setCannonSpeed(double speed){
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
+        speed *= cannonSpeed;
+        rCannonMotor.setPower(speed);
+        lCannonMotor.setPower(speed);
+    }
+
     /**
      * This method takes two powers and sets the left motors to a given power and a right motors to
      * a given power respectively.
      *
-     * @param left  A double between -1.0 and 1.0 which determines the speed that the left motors
+     * @param left A double between -1.0 and 1.0 which determines the speed that the left motors
      *              will be set to.
      * @param right A double between -1.0 and 1.0 which determines the speed that the right motors
      *              will be set to.
      */
-    public void tank(double left, double right) {
+    public void tank(double left, double right){
         if (!robotIsInitialized) throw new Error("Robot not initialized");
         leftFrontDrive.setPower(left);
         leftBackDrive.setPower(left);
@@ -448,7 +513,7 @@ public class HardwareSPQR {
      * This method stops the movement of the drive motors. If the motors are set to brake on zero
      * power the robot will stop in place.
      */
-    public void stopMoving() {
+    public void stopMoving(){
         if (!robotIsInitialized) throw new Error("Robot not initialized");
         this.setPowers(0);
         soundPlayer.stopPlayingAll();
@@ -460,7 +525,7 @@ public class HardwareSPQR {
      *
      * @param target An integer which is the target, in encoder units, for the robot to go to.
      */
-    public void setDriveTargetPosition(int target) {
+    public void setDriveTargetPosition(int target){
         if (!robotIsInitialized) throw new Error("Robot not initialized");
         this.leftFrontDrive.setTargetPosition(target);
         this.rightFrontDrive.setTargetPosition(target);
@@ -472,7 +537,7 @@ public class HardwareSPQR {
      * This method updates the position of the robot according to the detected navigation targets.
      * The updated location can be accessed through the location variable.
      */
-    public void updateRobotPosition() {
+    public void updateRobotPosition(){
         if (!this.robotIsInitialized || !this.initializeVuforia)throw new Error("Robot not initialized");;
         for (VuforiaTrackable trackable : allTrackables) {
             telemetry.addData(trackable.getName(), ((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible() ? "Visible" : "Not Visible");
@@ -495,7 +560,7 @@ public class HardwareSPQR {
      *
      * @return The number of rings in the starter stack from an enumeration.
      */
-    public Rings updateObjectDetection() {
+    public Rings updateObjectDetection(){
         if (!robotIsInitialized) throw new Error("Robot not initialized");
         if (initializeRingDetection){
             if (!isTfodActive){
@@ -509,5 +574,17 @@ public class HardwareSPQR {
             }
         }
         return Rings.NONE;
+    }
+
+    /**
+     * This method gets the position of where the wrist servo should be at the given motor position.
+     *
+     * @param motorPosition The current encoder position of the motor.
+     * @return The position of where the wrist servo should be.
+     */
+    private double getWristServoPosition(double motorPosition){
+
+
+        return 0;
     }
 }
