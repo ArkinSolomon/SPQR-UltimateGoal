@@ -34,6 +34,9 @@ public class MainOpMode extends OpMode {
     //Speed of the robot
     private double speed = 1.0;
 
+    //Gamepad inputs
+    private Input gamepad1Input, gamepad2Input;
+
     @Override
     public void init(){
 
@@ -42,8 +45,8 @@ public class MainOpMode extends OpMode {
         robot.dropIntake();
 
         //Rewrite gamepads
-        gamepad1 = new Input(gamepad1);
-        gamepad2 = new Input(gamepad2);
+        gamepad1Input = new Input(gamepad1);
+        gamepad2Input = new Input(gamepad2);
     }
 
     @Override
@@ -52,23 +55,23 @@ public class MainOpMode extends OpMode {
         /* Driver controls */
 
         //Left and right strafing
-        if (((Input) gamepad1).left_bumper.isDown){
-            if (((Input) gamepad1).right_bumper.isDown) return;
+        if (gamepad1Input.left_bumper.isDown){
+            if (gamepad1Input.right_bumper.isDown) return;
             robot.strafe(Dir.LEFT, speed);
         }
-        if (((Input) gamepad1).right_bumper.isDown) {
-            if (((Input) gamepad1).left_bumper.isDown) return;
+        if (gamepad1Input.right_bumper.isDown) {
+            if (gamepad1Input.left_bumper.isDown) return;
             robot.strafe(Dir.RIGHT, speed);
         }
 
         //Reverse directions
-        if (((Input) gamepad1).a.down){
+        if (gamepad1Input.a.down){
             speed *= -1;
         }
 
         //Tank movement
-        double right = -((Input) gamepad1).right_stick_y.value * speed;
-        double left = -((Input) gamepad1).left_stick_y.value * speed;
+        double right = -gamepad1Input.right_stick_y.value * speed;
+        double left = -gamepad1Input.left_stick_y.value * speed;
         if (speed < 0){
             double l = left;
             left = right;
@@ -76,12 +79,12 @@ public class MainOpMode extends OpMode {
         }
 
         //Only tank move if not strafing
-        if (!((Input) gamepad1).left_bumper.isDown && !((Input) gamepad1).right_bumper.isDown){
+        if (!gamepad1Input.left_bumper.isDown && !gamepad1Input.right_bumper.isDown){
             robot.tank(right, left);
         }
 
         //Sniper mode
-        if (((Input) gamepad1).b.down) {
+        if (gamepad1Input.b.down) {
             if (speed > 0){
                 if (speed > 0.5){
                     speed = 0.5;
@@ -100,26 +103,26 @@ public class MainOpMode extends OpMode {
         /* Gunner controls */
 
         //Drop lower intake
-        if (((Input) gamepad2).dpad_down.down){
+        if (gamepad2Input.dpad_down.down){
             robot.dropIntake();
         }
 
         //Raise lower intake
-        if (((Input) gamepad2).dpad_up.down){
+        if (gamepad2Input.dpad_up.down){
             robot.raiseIntake();
         }
 
         //Control intake
-        if (((Input) gamepad2).left_trigger.isDown){
+        if (gamepad2Input.left_trigger.isDown){
             robot.startIntake();
-        }else if (((Input) gamepad2).dpad_right.down){
+        }else if (gamepad2Input.dpad_right.down){
             robot.spitIntake();
         }else{
             robot.stopIntake();
         }
 
         //Control cannon
-        if (((Input) gamepad2).dpad_left.down){
+        if (gamepad2Input.dpad_left.down){
             robot.setCannonSpeed(1);
         }else if (gamepad2.dpad_right){
             robot.setCannonSpeed(-.1);
