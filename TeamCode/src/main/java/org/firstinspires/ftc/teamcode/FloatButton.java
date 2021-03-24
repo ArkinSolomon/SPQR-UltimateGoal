@@ -32,7 +32,7 @@ public class FloatButton extends Button {
      * This method updates the values of the input.
      */
     @Override
-    public void update() throws Exception {
+    public void update(){
         boolean isCurrentInputDown;
         switch (button){
             case LEFT_STICK_X:
@@ -60,7 +60,8 @@ public class FloatButton extends Button {
                 isCurrentInputDown = value >= threshold;
                 break;
             default:
-                throw new Exception("Why is the button \"NONE\"?????????");
+                isCurrentInputDown = false;
+                break;
         }
         updateValues(isCurrentInputDown);
     }

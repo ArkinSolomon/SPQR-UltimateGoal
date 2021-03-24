@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 /**
  * This class represents a single button that has a boolean value.
  */
@@ -44,7 +46,7 @@ public class Button {
     /**
      * This method updates the values of the button.
      */
-    public void update() throws Exception{
+    public void update(){
         boolean isCurrentButtonDown;
         switch (button){
             case A:
@@ -93,7 +95,8 @@ public class Button {
                 isCurrentButtonDown = gamepad.y;
                 break;
             default:
-                throw new Exception("Why is the button \"NONE\"?????????");
+                isCurrentButtonDown = false;
+                break;
         }
         updateValues(isCurrentButtonDown);
     }

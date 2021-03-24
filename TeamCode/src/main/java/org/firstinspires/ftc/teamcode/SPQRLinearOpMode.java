@@ -69,11 +69,14 @@ public abstract class SPQRLinearOpMode extends LinearOpMode {
         distance *= 10;
         DcMotor.ZeroPowerBehavior previousBehavior = this.robot.leftFrontDrive.getZeroPowerBehavior();
         this.robot.setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        int encoderTarget = (int) ((distance/wheelCircumference)*ppr);
-        this.robot.leftFrontDrive.setTargetPosition((direction == Dir.LEFT) ? encoderTarget : -encoderTarget);
-        this.robot.leftBackDrive.setTargetPosition((direction == Dir.LEFT) ? -encoderTarget: encoderTarget);
-        this.robot.rightFrontDrive.setTargetPosition((direction == Dir.LEFT) ? -encoderTarget: encoderTarget);
-        this.robot.rightBackDrive.setTargetPosition((direction == Dir.LEFT) ? encoderTarget : -encoderTarget);
+        int encoderTarget = (int) ((distance/wheelCircumference) * ppr);
+        if (speed < 0){
+            encoderTarget *= -1;
+        }
+        this.robot.leftFrontDrive.setTargetPosition((direction == Dir.RIGHT) ? encoderTarget : -encoderTarget);
+        this.robot.leftBackDrive.setTargetPosition((direction == Dir.RIGHT) ? -encoderTarget: encoderTarget);
+        this.robot.rightFrontDrive.setTargetPosition((direction == Dir.RIGHT) ? -encoderTarget: encoderTarget);
+        this.robot.rightBackDrive.setTargetPosition((direction == Dir.RIGHT) ? encoderTarget : -encoderTarget);
         resetEncoders(DcMotor.RunMode.RUN_TO_POSITION);
         this.robot.strafe(direction, speed);
         while(drivesBusy() && !isStopRequested() && opModeIsActive()){
@@ -91,11 +94,14 @@ public abstract class SPQRLinearOpMode extends LinearOpMode {
      *                 millimeters.
      * @param speed A double between -1.0 and 1.0 which is the speed at which the robot is to drive.
      */
-    public void drive(double distance, double speed){
+    public void drive (double distance, double speed){
         distance *= 10;
         DcMotor.ZeroPowerBehavior previousBehavior = this.robot.leftFrontDrive.getZeroPowerBehavior();
         this.robot.setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        int encoderTarget = (int) ((distance/wheelCircumference)*ppr);
+        int encoderTarget = (int) ((distance/wheelCircumference) * ppr);
+        if (speed < 0){
+            encoderTarget *= -1;
+        }
         this.robot.setDriveTargetPosition(-encoderTarget);
         resetEncoders(DcMotor.RunMode.RUN_TO_POSITION);
         this.robot.setPowers(speed);
@@ -121,7 +127,7 @@ public abstract class SPQRLinearOpMode extends LinearOpMode {
      *
      * @return A double which represents the average encoder values of all of the robot's drive motors.
      */
-    protected double driveAverage(){
+    protected double driveAverage (){
         int[] encoderPositions = {this.robot.leftFrontDrive.getCurrentPosition(), this.robot.rightFrontDrive.getCurrentPosition(), this.robot.leftBackDrive.getCurrentPosition(), this.robot.rightBackDrive.getCurrentPosition()};
         int sum = 0;
         for (int encoderPosition : encoderPositions){
@@ -134,12 +140,11 @@ public abstract class SPQRLinearOpMode extends LinearOpMode {
      * This method synchronously turns the robot to a specified angle (in degrees) that is relative
      * to the robot at a given speed. This uses calculations based off of the definition of radians.
      *
-     * @param angle A double which is the relative angle (in degrees) to turn. Positive angle is
-     *              counter clockwise.
+     * @param angle A double which is the relative angle (in degrees) to turn.
      * @param speed A double between -1.0 and 1.0 which is the speed at which the robot is to turn.
      *              This value will be assigned as the speed of the motors
      */
-    protected void turn2 (double angle, double speed) {
+    public void turn2 (double angle, double speed) {
         DcMotor.ZeroPowerBehavior previousBehavior = this.robot.leftFrontDrive.getZeroPowerBehavior();
         this.robot.setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         resetEncoders(DcMotor.RunMode.RUN_TO_POSITION);
@@ -160,10 +165,9 @@ public abstract class SPQRLinearOpMode extends LinearOpMode {
         while (drivesBusy() && !isStopRequested() && opModeIsActive()){
             updateTelemetry();
         }
-        resetEncoders(DcMotor.RunMode.RUN_USING_ENCODER);
         this.robot.setDriveZeroPowerBehavior(previousBehavior);
-        this.robot.setPowers(0);
     }
+
 
     /**
      * This method updates the telemetry data on both the driver station and the robot controller
@@ -181,11 +185,13 @@ public abstract class SPQRLinearOpMode extends LinearOpMode {
         telemetry.addData("Right Front Target", this.robot.rightFrontDrive.getTargetPosition());
         telemetry.addData("Left Back Target", this.robot.leftBackDrive.getTargetPosition());
         telemetry.addData("Right Back Target", this.robot.rightBackDrive.getTargetPosition());
+        telemetry.addData("Arm Motor Target", this.robot.armMotor.getTargetPosition());
 
         telemetry.addData("Left Front Encoder", this.robot.leftFrontDrive.getCurrentPosition());
         telemetry.addData("Right Front Encoder", this.robot.rightFrontDrive.getCurrentPosition());
         telemetry.addData("Left Back Encoder", this.robot.leftBackDrive.getCurrentPosition());
         telemetry.addData("Right Back Encoder", this.robot.rightBackDrive.getCurrentPosition());
+        telemetry.addData("Arm Motor Encoder", this.robot.armMotor.getCurrentPosition());
         telemetry.update();
     }
 
@@ -210,12 +216,13 @@ public abstract class SPQRLinearOpMode extends LinearOpMode {
         long startTime = new Date().getTime();
         while (((int) (new Date().getTime() - startTime)) < waitFor){
             Rings update = robot.updateObjectDetection();
+            telemetry.addData("Rings", update);
             if (update != Rings.NONE){
                 return update;
             }
+            updateTelemetry();
         }
-        robot.tfod.deactivate();
-        robot.tfod.shutdown();
+        new ShutdownTFOD(robot).start();
         return Rings.NONE;
     }
 }

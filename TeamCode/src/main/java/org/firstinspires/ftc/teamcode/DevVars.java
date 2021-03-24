@@ -9,4 +9,5 @@ public class DevVars {
     public static final boolean enableDriveMotors = true;
     public static final boolean showVuforiaMonitor = false;
     public static final boolean showTFODMonitor = true;
+    public static final boolean enableArmDebug = true;
 }

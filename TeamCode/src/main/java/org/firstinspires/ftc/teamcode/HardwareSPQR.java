@@ -76,7 +76,7 @@ public class HardwareSPQR {
     private HardwareMap hwMap = null;
 
     //Temporary cannon speed adjustment
-    public final double cannonSpeed = .32;
+    public final double cannonSpeed = .75;
 
     //Declare hardware
     public DcMotor rightFrontDrive = null;
@@ -101,7 +101,7 @@ public class HardwareSPQR {
     //Whether or not to initialize vuforia trackables
     private boolean initializeVuforia = false;
 
-    //This stores the vuforia trackables object contaiining all of the vuforia trackables
+    //This stores the vuforia trackables object containing all of the vuforia trackables
     private VuforiaTrackables ultimateGoalTrackables;
 
     //The navigation targets
@@ -198,15 +198,19 @@ public class HardwareSPQR {
         //Reset encoders and set initial positions
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         //Set drive motors to brake
         setDriveZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         //Set encoder tolerance of the motors on the robot
-        ((DcMotorEx) rightFrontDrive).setTargetPositionTolerance(10);
-        ((DcMotorEx) leftFrontDrive).setTargetPositionTolerance(10);
-        ((DcMotorEx) rightBackDrive).setTargetPositionTolerance(10);
-        ((DcMotorEx) leftBackDrive).setTargetPositionTolerance(10);
+        ((DcMotorEx) rightFrontDrive).setTargetPositionTolerance(5);
+        ((DcMotorEx) leftFrontDrive).setTargetPositionTolerance(5);
+        ((DcMotorEx) rightBackDrive).setTargetPositionTolerance(5);
+        ((DcMotorEx) leftBackDrive).setTargetPositionTolerance(5);
+        ((DcMotorEx) armMotor).setTargetPositionTolerance(5);
+        armMotor.setTargetPosition(0);
 
         //Set motor direction
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
@@ -216,6 +220,7 @@ public class HardwareSPQR {
         lowIntakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rCannonMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         lCannonMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        armMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         //Set all motor power to zero
         leftFrontDrive.setPower(0);
@@ -225,6 +230,7 @@ public class HardwareSPQR {
         lowIntakeMotor.setPower(0);
         rCannonMotor.setPower(0);
         lCannonMotor.setPower(0);
+        armMotor.setPower(0);
 
         /* Servo setup */
 
@@ -237,6 +243,8 @@ public class HardwareSPQR {
         //Set initial servo position/power
         lIntakeDrop.setPosition(1);
         lPulleyServo.setPower(0);
+        wristServo.setPosition(0);
+        handServo.setPosition(1);
 
         /* Sound setup */
 
@@ -355,7 +363,7 @@ public class HardwareSPQR {
 
     /**
      * This method sets the drive behavior of what one of the drive motors of the robot are to do
-     * when its power is set to 0.
+     * when its power is set to zero.
      *
      * @param behavior A ZeroPowerBehavior enumeration (Under DcMotor) which will be applied to all
      *                 of the drive motors of the robot.
@@ -385,7 +393,7 @@ public class HardwareSPQR {
      */
     public void raiseIntake(){
         if (!robotIsInitialized) throw new Error("Robot not initialized");
-        lIntakeDrop.setPosition(1);
+        lIntakeDrop.setPosition(.6);
     }
 
     /**
@@ -577,14 +585,31 @@ public class HardwareSPQR {
     }
 
     /**
+     * Close the hand on the robot.
+     */
+    public void handGrab(){
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
+        handServo.setPosition(1);
+    }
+
+    /**
+     * Open the hand on the robot
+     */
+    public void handRelease(){
+        if (!robotIsInitialized) throw new Error("Robot not initialized");
+        handServo.setPosition(0);
+    }
+
+    /**
      * This method gets the position of where the wrist servo should be at the given motor position.
      *
      * @param motorPosition The current encoder position of the motor.
      * @return The position of where the wrist servo should be.
      */
-    private double getWristServoPosition(double motorPosition){
-
-
-        return 0;
+    public double getWristServoPosition(double motorPosition){
+        if (motorPosition < 660){
+            return 1;
+        }
+        return 4.1238e-10 * Math.pow(motorPosition, 3) + -0.00000129126 * Math.pow(motorPosition, 2) + 0.000935733 * motorPosition + 0.827177;
     }
 }
