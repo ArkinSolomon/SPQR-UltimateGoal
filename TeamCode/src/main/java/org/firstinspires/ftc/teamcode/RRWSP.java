@@ -3,10 +3,10 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 /**
- * Autonomous: Red Right Wobble-Goal Shoot Park
- *
  * This OpMode starts from the right-most red starting point against the wall, with the wobble goal
  * loaded on the intake drop.
+ *
+ * Autonomous: Red Right Wobble-Goal Shoot Park
  *
  * @author Arkin Solomon
  */

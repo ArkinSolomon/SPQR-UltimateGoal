@@ -5,9 +5,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 /**
- * TeleOp: BOTH ALLIANCES
+ * This is the main opmode used in the driver-controlled period. Start anywhere.
  *
- * Start anywhere. This is the main opmode used in the driver-controlled period.
+ * TeleOp: BOTH ALLIANCES
  *
  * Driver controls:
  *  - Right bumper: Strafe right.

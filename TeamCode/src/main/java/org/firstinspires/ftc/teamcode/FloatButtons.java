@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 /**
  * This enumeration defines the buttons on a gamepad that are represented by floats.
+ *
+ * @author Arkin Solomon
  */
 public enum FloatButtons {
     LEFT_STICK_X,

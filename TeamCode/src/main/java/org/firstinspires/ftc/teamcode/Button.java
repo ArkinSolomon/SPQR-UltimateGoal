@@ -6,6 +6,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 /**
  * This class represents a single button that has a boolean value.
+ *
+ * @author Arkin Solomon
  */
 public class Button {
 

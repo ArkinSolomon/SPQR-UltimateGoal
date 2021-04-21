@@ -5,9 +5,9 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /**
- * Autonomous: DEVELOPMENT
- *
  * This OpMode is used for development and should NOT be used in game.
+ *
+ * Autonomous: DEVELOPMENT
  *
  * @author Arkin Solomon
  */

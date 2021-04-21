@@ -4,9 +4,10 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /**
- * TeleOp: BOTH ALLIANCES
  *
- * Start anywhere. This is the main opmode used for Lightbot in the driver-controlled period.
+ * This is the main opmode used for Lightbot in the driver-controlled period. Start anywhere.
+ *
+ * TeleOp: BOTH ALLIANCES
  *
  * Driver controls:
  *  - Right bumper: Strafe right.

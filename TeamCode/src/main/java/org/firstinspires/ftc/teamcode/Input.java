@@ -6,6 +6,8 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 
 /**
  * This class manages input abstractions.
+ *
+ * @author Arkin Solomon
  */
 public class Input extends Gamepad {
 

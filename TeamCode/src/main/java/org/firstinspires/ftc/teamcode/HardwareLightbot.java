@@ -14,7 +14,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
  */
 
 /**
- * This hardware class is for Lightbot, the new robot. It declares and defines all hardware
+ * This hardware class is for LightBot, the new robot. It declares and defines all hardware
  * components on the robot, as well as provides control abstractions.
  *
  * @author Arkin Solomon
@@ -35,6 +35,8 @@ public class HardwareLightbot {
     public DcMotor leftFrontDrive = null;
     public DcMotor rightBackDrive = null;
     public DcMotor leftBackDrive = null;
+//    public DcMotor lowIntakeMotor = null;
+//    public DcMotor topIntakeMotor = null;
 
     /**
      * Class constructor. Returns a new instance of HardwareLightbot. The constructor also defines
@@ -57,6 +59,8 @@ public class HardwareLightbot {
             rightBackDrive = hwMap.get(DcMotor.class, "right_back_drive");
             leftBackDrive = hwMap.get(DcMotor.class, "left_back_drive");
         }
+//        lowIntakeMotor = hwMap.get(DcMotor.class, "low_intake_motor");
+//        topIntakeMotor = hwMap.get(DcMotor.class, "top_intake_motor");
 
         //Set motor direction
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);

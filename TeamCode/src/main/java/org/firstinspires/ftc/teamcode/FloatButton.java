@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 /**
  * An instance class represents a button which value is stored as a float.
+ *
+ * @author Arkin Solomon
  */
 public class FloatButton extends Button {
 

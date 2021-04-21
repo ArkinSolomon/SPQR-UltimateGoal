@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 /**
  * This enumeration defines the buttons on a gamepad that are booleans.
+ *
+ * @author Arkin Solomon
  */
 public enum Buttons {
     A,
